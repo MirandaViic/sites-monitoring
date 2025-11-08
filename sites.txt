@@ -1,0 +1,4 @@
+https://alura.com.br
+https://httpbin.org/status/404
+https://httpbin.org/status/200
+https://www.casadocodigo.com.br
