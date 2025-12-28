@@ -2,7 +2,6 @@
 *.exe
 *.out
 *.app
-app
 
 # Go build artifacts
 bin/
