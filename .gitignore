@@ -1,0 +1,11 @@
+# Executables
+*.exe
+*.out
+*.app
+
+# Go build artifacts
+bin/
+dist/
+
+# OS files
+.DS_Store
