@@ -79,7 +79,7 @@ func iniciarMonitoramento() {
 		}
 
 		wg.Wait()
-		time.Sleep(delay*time.Second)
+		time.Sleep(delay * time.Second)
 		fmt.Println()
 
 	}
@@ -177,7 +177,7 @@ func registraLog(site string, status bool, detalhe string) {
 	log := fmt.Sprintf(
 
 		"%s - Site: %s - Online: %t - %s\n",
-		time.now().Format("02/01/2006 15:04:05",
+		time.Now().Format("02/01/2006 15:04:05",
 		site,
 		status,
 		detalhe,
