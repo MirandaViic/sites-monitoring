@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+ "sync"
 	"time"
 )
 
@@ -23,7 +24,6 @@ func main() {
 		case 1:
 			iniciarMonitoramento()
 		case 2:
-			//Chamando aqui
 			fmt.Println("Exibindo Logs...")
 			imprimeLogs()
 		case 0:
@@ -61,27 +61,35 @@ func iniciarMonitoramento() {
 
 	sites, err := leSitesDoArquivo()
 	if err != nil {
-		fmt.Println("Erro ao acessar site:", err)
+		fmt.Println("Erro ao acessar site:",err)
 		return
 	}
 
-	for i := 0; i < monitoramentos; i++ {
-		for index, site := range sites {
-			fmt.Printf("Testando site %d: %s\n", index, site)
-			testaSite(site)
-		}
-		time.Sleep(delay * time.Second)
-		fmt.Println("")
-	}
+	for ciclo := 0; ciclo < monitoramentos; ciclo++ {
+		var wg sync.WaitGroup
 
-	fmt.Println("")
+		for index, site := range sites {
+			wg.Add(1)
+
+			go func(i int, s string){
+				defer wg.Done()
+				fmt.Printf("Testando site %d: %s\n", i, s)
+				testaSite(s)
+			}(index, site)
+		}
+
+		wg.Wait()
+		time.Sleep(delay * time.Second)
+		fmt.Println()
+
+	}
 }
 
 func testaSite(site string) {
 	resp, err := http.Get(site)
 
 	if err != nil {
-		fmt.Println("Erro ao acessar site:", err)
+		fmt.Println("Ocorreu um erro:", err)
 		registraLog(site, false, "erro de conexão")
 		return
 	}
@@ -91,25 +99,25 @@ func testaSite(site string) {
 	status := resp.StatusCode
 
 	switch {
-	case status >= 200 && status < 300:
+		case status >= 200 && status < 300:
 		fmt.Printf("Site %s carregado com sucesso! Status Code: %d\n", site, status)
 		registraLog(site, true, "online")
-	case status >= 300 && status < 400:
+		case status >= 300 && status < 400:
 		fmt.Printf("Site %s redirecionado! Status Code: %d\n", site, status)
 		registraLog(site, false, "redirecionamento")
-	case status >= 400 && status < 500:
-		fmt.Printf("Site %s não encontrado! Status Code: %d\n", site, status)
+		case status >= 400 && status < 500:
+		fmt.Printf("Site %s nao encontrado! Status Code: %d\n", site, status)
 		registraLog(site, false, "não encontrado")
-	case status >= 500:
+		case status >= 500:
 		fmt.Printf("Site %s com erro no servidor! Status Code: %d\n", site, status)
 		registraLog(site, false, "erro no servidor")
-	default:
+		default:
 		fmt.Printf("Site %s retornou um status desconhecido! Status Code: %d\n", site, status)
 		registraLog(site, false, "status desconhecido")
-	}
+		}
 }
 
-func leSitesDoArquivo() ([]string, error) {
+func leSitesDoArquivo() []string {
 
 	var sites []string
 
@@ -140,7 +148,7 @@ func leSitesDoArquivo() ([]string, error) {
 
 	}
 
-	return sites, nil
+	return sites
 }
 
 func imprimeLogs() {
@@ -169,11 +177,11 @@ func registraLog(site string, status bool, detalhe string) {
 	log := fmt.Sprintf(
 
 		"%s - Site: %s - Online: %t - %s\n",
-		time.Now().Format("02/01/2006 15:04:05"),
+		time.Now().Format("02/01/2006 15:04:05",
 		site,
 		status,
 		detalhe,
 	)
-
+	
 	arquivo.WriteString(log)
 }
